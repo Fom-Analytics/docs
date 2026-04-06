@@ -1,0 +1,100 @@
+---
+title: "Texnologik stek"
+description: "FOM Analytics'ni quvvatlovchi tillar, freymvorklar, kutubxonalar va xavfsizlik modeli"
+---
+
+## Umumiy ko'rinish
+
+FOM Analytics — zamonaviy, puxta o'ylangan stekda qurilgan to'liq funksiyali veb-ilova. Maqsad — minimal bog'liqliklar: faqat zarur bo'lgani. Bu tizimni qo'llab-quvvatlashni osonlashtiradi va hujum yuzasini kichraytiradi.
+
+## Backend
+
+| Qatlam | Texnologiya |
+|---|---|
+| Til | PHP 8.2+ |
+| Freymvork | Laravel 12 |
+| Yo'naltirish (frontend) | Inertia.js 2 |
+| Jadval qayta ishlash | PhpSpreadsheet |
+| Xavfsiz marshrut bog'lash | Laravel Wayfinder |
+
+Server to'g'ridan-to'g'ri HTML chiqarmaydi. Butun interfeys **Inertia.js** orqali boshqariladi — u Laravel kontrollerlarini alohida API qatlamisiz React komponentlariga bog'laydi.
+
+**PhpSpreadsheet** (`phpoffice/phpspreadsheet`) server tomonida yuklangan Excel fayllarni tizimga ma'lumot kirishidan oldin qayta ishlash uchun ishlatiladi.
+
+## Frontend
+
+| Qatlam | Texnologiya |
+|---|---|
+| Til | TypeScript |
+| UI freymvork | React 19 |
+| Komponent kutubxonasi | shadcn/ui (Radix UI primitivlari) |
+| Stillashtirish | Tailwind CSS v4 |
+| Jadvallar | TanStack Table |
+| Grafiklar | Recharts |
+| Sudrab tashlash | dnd-kit |
+| Sana bilan ishlash | date-fns |
+| Bildirishnomalar | Novu |
+| Yasovchi vosita | Vite 7 |
+
+shadcn/ui komponentlari paket menejeri orqali emas, **to'g'ridan-to'g'ri kod bazasiga ko'chiriladi**. Bu yangilanishlar qo'lda qo'llanilishi kerakligini anglatadi — pastdagi [komponent xavfsizligi eslatmasiga](#component-security) qarang.
+
+## Xavfsizlik
+
+### Autentifikatsiya qatlamlari
+
+FOM Analytics autentifikatsiyani boshqarish uchun **Laravel Fortify** dan foydalanadi. Ikki himoya darajasi mavjud:
+
+<Columns cols={2}>
+  <Card title="Sessiya autentifikatsiyasi" icon="lock">
+    Standart himoyalangan marshrutlar. Foydalanuvchilar email va parol bilan kiradi hamda xavfsiz server tomonidagi sessiya oladi.
+  </Card>
+  <Card title="Ikki bosqichli autentifikatsiya (2FA)" icon="shield-halved">
+    Qat'iyroq marshrutlar qo'shimcha ravishda TOTP kodi talab qiladi. Fortify ro'yxatga olish, tekshirish va tiklash jarayonlarini boshqaradi.
+  </Card>
+</Columns>
+
+### Kelajakda: WorkOS AuthKit
+
+Hozirgi Fortify asosidagi tizim **WorkOS AuthKit** ga ko'chiriladi va quyidagilarni beradi:
+
+- Korporativ darajadagi identifikatsiyani boshqarish
+- Foydalanuvchi kirish huquqlari va rollarini batafsil nazorat qilish
+- Barcha foydalanuvchi harakatlari uchun to'liq audit jurnallari
+- Yaxshilangan SSO va MFA imkoniyatlari
+
+Bu ko'chirish alohida bosqich sifatida rejalashtirilgan va ilovaning ko'rinishini o'zgartirmaydi.
+
+### Komponent xavfsizligi
+
+<Warning>
+  shadcn/ui komponentlari paket menejeri tomonidan avtomatik yangilanmaydi — ular to'g'ridan-to'g'ri manba kodida saqlanadi. Radix UI primitivlaridagi xavfsizlik yamoqlari qo'lda qo'llanilishi kerak. Vaqti-vaqti bilan [Radix UI relizlarini](https://github.com/radix-ui/primitives/releases) va [shadcn/ui o'zgarishlar jurnalini](https://ui.shadcn.com/docs/changelog) ko'rib chiqing va ta'sirlangan komponent fayllarini yangilang.
+</Warning>
+
+## Python skriptlari
+
+Kichik Python utilitasi **virtual muhit** ichida ishga tushib, Excel fayllarni asosiy qayta ishlash quvuriga uzatishdan oldin CSV formatiga o'giradi. U veb-ilovaning bir qismi emas va mustaqil skript sifatida ishlaydi.
+
+```
+scripts/
+└── venv/               # Python virtual muhiti (commit qilinmaydi)
+└── excel_to_csv.py     # .xlsx / .xls fayllarni .csv ga o'giradi
+```
+
+Virtual muhitni izolyatsiyalangan holda saqlang va hech qachon tizim Python interpretatoriga paket o'rnatmang.
+
+## Dasturlash vositalari
+
+| Vosita | Maqsad |
+|---|---|
+| Laravel Pint | PHP kod uslubi (PSR-12) |
+| ESLint + Prettier | JS/TS linting va formatlash |
+| PHPUnit | PHP testlash |
+| Laravel Sail | Docker asosidagi lokal muhit (ixtiyoriy) |
+| Laravel Pail | Real vaqtda log kuzatuv |
+| Concurrently | Server, navbat, loglar va Vite ni bitta terminalda ishlatish |
+
+## Joylashtirish
+
+<Note>
+  Stek PHP va Python runtimelarini o'z ichiga olgani uchun, barcha kerakli narsalarni birlashtirgan Docker image yaratish mumkin. Bu ishlab chiquvchilarga FOM Analytics ni istalgan muhitda bir xil tarzda joylashtirishni osonlashtiradi.
+</Note>

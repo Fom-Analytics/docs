@@ -1,0 +1,100 @@
+---
+title: "Tech stack"
+description: "Languages, frameworks, libraries, and security model powering FOM Analytics"
+---
+
+## Overview
+
+FOM Analytics is a full-stack web application built on a modern, opinionated stack. The goal is minimal dependencies — only what is necessary — to keep the system maintainable and the attack surface small.
+
+## Backend
+
+| Layer | Technology |
+|---|---|
+| Language | PHP 8.2+ |
+| Framework | Laravel 12 |
+| Routing (frontend) | Inertia.js 2 |
+| Spreadsheet processing | PhpSpreadsheet |
+| Type-safe route binding | Laravel Wayfinder |
+
+The server renders no HTML directly. All UI is driven by **Inertia.js**, which bridges Laravel controllers to React components without a separate API layer.
+
+**PhpSpreadsheet** (`phpoffice/phpspreadsheet`) is used server-side to process uploaded Excel files before data is ingested into the system.
+
+## Frontend
+
+| Layer | Technology |
+|---|---|
+| Language | TypeScript |
+| UI framework | React 19 |
+| Component library | shadcn/ui (Radix UI primitives) |
+| Styling | Tailwind CSS v4 |
+| Tables | TanStack Table |
+| Charts | Recharts |
+| Drag and drop | dnd-kit |
+| Date handling | date-fns |
+| Notifications | Novu |
+| Build tool | Vite 7 |
+
+shadcn/ui components are **copied directly into the codebase** rather than installed as a dependency. This means updates must be applied manually — see the [component security note](#component-security) below.
+
+## Security
+
+### Authentication layers
+
+FOM Analytics uses **Laravel Fortify** to enforce authentication. Two protection layers are available:
+
+<Columns cols={2}>
+  <Card title="Session authentication" icon="lock">
+    Standard protected routes. Users authenticate with email and password and receive a secure server-side session.
+  </Card>
+  <Card title="Two-factor authentication (2FA)" icon="shield-halved">
+    Stricter routes additionally require a TOTP code. Fortify handles enrollment, challenge, and recovery flows.
+  </Card>
+</Columns>
+
+### Future: WorkOS AuthKit
+
+The current Fortify-based setup will be migrated to **WorkOS AuthKit** to gain:
+
+- Enterprise-grade identity management
+- Fine-grained user access controls and roles
+- Full audit logs for all user actions
+- Improved SSO and MFA options
+
+This migration is planned as a separate phase and will not change the surface of the application.
+
+### Component security
+
+<Warning>
+  shadcn/ui components are not auto-updated by a package manager — they live in your source tree. Security patches from the Radix UI primitives underneath must be applied manually. Periodically review upstream [Radix UI releases](https://github.com/radix-ui/primitives/releases) and the [shadcn/ui changelog](https://ui.shadcn.com/docs/changelog) and update affected component files.
+</Warning>
+
+## Python scripts
+
+A small Python utility runs inside a **virtual environment** to convert Excel sheets to CSV format before they are passed to the main processing pipeline. It is not part of the web application process and runs as a standalone script.
+
+```
+scripts/
+└── venv/               # Python virtual environment (not committed)
+└── excel_to_csv.py     # Converts .xlsx / .xls files to .csv
+```
+
+Keep the virtual environment isolated and never install packages into the system Python interpreter.
+
+## Dev tooling
+
+| Tool | Purpose |
+|---|---|
+| Laravel Pint | PHP code style (PSR-12) |
+| ESLint + Prettier | JS/TS linting and formatting |
+| PHPUnit | PHP testing |
+| Laravel Sail | Docker-based local environment (optional) |
+| Laravel Pail | Real-time log tailing |
+| Concurrently | Runs server, queue, logs, and Vite in one terminal |
+
+## Deployment
+
+<Note>
+  Since the stack includes both PHP and Python runtimes, a Docker image can be built that bundles everything together — making it straightforward for developers to deploy FOM Analytics consistently across any environment.
+</Note>
